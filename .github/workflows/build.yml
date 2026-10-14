@@ -1,0 +1,39 @@
+name: build-test-publish
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/aleksanderurbanskidev-prod/kontenery-lab2
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: docker build -t $IMAGE:${{ github.sha }} .
+
+      - name: Test
+        run: |
+          docker run -d --name t -p 8080:8080 $IMAGE:${{ github.sha }}
+          sleep 5
+          curl -fs http://localhost:8080 | grep -q "Hello from container! Version 1.0"
+          test "$(docker exec t id -u)" != "0"
+          docker rm -f t
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push
+        run: docker push $IMAGE:${{ github.sha }}
