@@ -22,11 +22,11 @@ jobs:
 
       - name: Test
         run: |
-          docker run -d --name t -p 8080:8080 $IMAGE:${{ github.sha }}
+          docker run -d --name hello-test -p 8080:8080 $IMAGE:${{ github.sha }}
           sleep 5
           curl -fs http://localhost:8080 | grep -q "Hello from container! Version 1.0"
-          test "$(docker exec t id -u)" != "0"
-          docker rm -f t
+          test "$(docker exec hello-test id -u)" != "0"
+          docker rm -f hello-test
 
       - name: Login to GHCR
         uses: docker/login-action@v3
